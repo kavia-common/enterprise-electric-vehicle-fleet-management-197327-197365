@@ -2,6 +2,7 @@ import React from "react";
 import "./App.css";
 import AppRouter from "./components/AppRouter";
 import { AppProvider } from "./state/store";
+import { AuthProvider } from "./context/AuthContext";
 
 /**
  * PUBLIC_INTERFACE
@@ -11,7 +12,9 @@ function App() {
   return (
     <div className="App">
       <AppProvider>
-        <AppRouter />
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
       </AppProvider>
     </div>
   );

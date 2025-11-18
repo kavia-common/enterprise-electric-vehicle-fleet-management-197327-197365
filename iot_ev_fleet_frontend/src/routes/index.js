@@ -8,11 +8,13 @@ import Vehicles from "../pages/Vehicles";
 import Charging from "../pages/Charging";
 import Analytics from "../pages/Analytics";
 import Settings from "../pages/Settings";
+import Alerts from "../pages/Alerts";
 
 export const routes = [
   { path: "/", element: <Dashboard />, title: "Dashboard" },
   { path: "/vehicles", element: <Vehicles />, title: "Vehicles" },
   { path: "/charging", element: <Charging />, title: "Charging" },
+  { path: "/alerts", element: <Alerts />, title: "Alerts" },
   { path: "/analytics", element: <Analytics />, title: "Analytics" },
   { path: "/settings", element: <Settings />, title: "Settings" },
 ];

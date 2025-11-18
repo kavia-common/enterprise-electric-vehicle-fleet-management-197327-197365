@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { alertsApi } from "../services";
+import { Config } from "../services/config";
 
 /**
  * PUBLIC_INTERFACE
@@ -38,12 +39,14 @@ const Alerts = () => {
         if (mounted) setAlerts(items);
       } catch (e) {
         if (mounted) {
-          setError(e?.message || "Failed to load alerts");
-          // Provide some sample data
-          setAlerts([
-            { id: "a1", vehicleId: "v-1", title: "Low battery", message: "Battery below 20%", severity: "warning", status: "open", createdAt: new Date().toISOString() },
-            { id: "a2", vehicleId: "v-2", title: "Charging fault", message: "Station error 0x21", severity: "critical", status: "open", createdAt: new Date().toISOString() },
-          ]);
+          // In mock mode, silently fallback to empty
+          if (Config.MOCK_MODE && (e?.status === 404 || /mock mode/i.test(e?.message || ""))) {
+            setAlerts([]);
+            setError(null);
+          } else {
+            setError(e?.message || "Failed to load alerts");
+            setAlerts([]);
+          }
         }
       } finally {
         if (mounted) setLoading(false);

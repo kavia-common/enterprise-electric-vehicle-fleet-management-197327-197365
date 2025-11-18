@@ -1,6 +1,6 @@
  /** 
   * PUBLIC_INTERFACE
-  * Provides environment-driven configuration for API and WebSocket base URLs.
+  * Provides environment-driven configuration for API and WebSocket base URLs and feature flags.
   * Automatically selects ws:// or wss:// based on current page protocol if REACT_APP_WS_URL is not set.
   * Falls back gracefully to disabling WS when URL cannot be derived.
   */
@@ -77,11 +77,44 @@ function resolveApiBase() {
   return process.env.REACT_APP_API_BASE || "http://localhost:3001";
 }
 
+/**
+ * PUBLIC_INTERFACE
+ * resolveFeatureFlags
+ * Parses REACT_APP_FEATURE_FLAGS (comma-separated) into a set-like object and derives
+ * ENABLE_BACKEND and MOCK_MODE flags.
+ */
+function resolveFeatureFlags() {
+  const raw = process.env.REACT_APP_FEATURE_FLAGS || "";
+  const items = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const map = {};
+  items.forEach((k) => (map[k] = true));
+
+  // Backend enablement: default false (mock/no-DB-friendly)
+  const enableBackend =
+    String(process.env.REACT_APP_ENABLE_BACKEND || "").toLowerCase() === "true";
+
+  // MOCK_MODE is the inverse (true by default)
+  const mockMode = !enableBackend;
+
+  return {
+    FLAGS: map,
+    ENABLE_BACKEND: enableBackend,
+    MOCK_MODE: mockMode,
+  };
+}
+
 const apiBase = resolveApiBase();
 const wsUrl = resolveWebSocketUrl();
+const { FLAGS, ENABLE_BACKEND, MOCK_MODE } = resolveFeatureFlags();
 
 // PUBLIC_INTERFACE
 export const Config = {
   apiBase,
   wsUrl,
+  ENABLE_BACKEND,
+  MOCK_MODE,
+  FLAGS,
 };

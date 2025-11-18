@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { vehiclesApi } from "../services";
+import { Config } from "../services/config";
 
 /**
  * PUBLIC_INTERFACE
@@ -38,12 +39,13 @@ const Vehicles = () => {
         if (mounted) setVehicles(items);
       } catch (e) {
         if (mounted) {
-          setError(e?.message || "Failed to load vehicles");
-          // Provide a small mock so UI is usable offline
-          setVehicles([
-            { id: "v-1", name: "Cargo 12", vin: "VIN0001", status: "online", make: "Kavia", model: "Cargo", year: 2023, batteryLevel: 82, lastSeen: new Date().toISOString() },
-            { id: "v-2", name: "Shuttle 03", vin: "VIN0002", status: "offline", make: "Kavia", model: "Shuttle", year: 2022, batteryLevel: 41, lastSeen: new Date(Date.now() - 86000).toISOString() },
-          ]);
+          if (Config.MOCK_MODE && (e?.status === 404 || /mock mode/i.test(e?.message || ""))) {
+            setVehicles([]);
+            setError(null);
+          } else {
+            setError(e?.message || "Failed to load vehicles");
+            setVehicles([]);
+          }
         }
       } finally {
         if (mounted) setLoading(false);

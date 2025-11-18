@@ -8,6 +8,7 @@ Modern, lightweight React frontend using the Ocean Professional theme for the En
 - React Router v6 routes for Dashboard, Vehicles, Charging, Analytics, Settings
 - Environment-driven API and WebSocket configuration (with HTTPS-aware auto-detection)
 - Minimal dependencies, no heavy UI libraries
+- Mock/No-DB mode with graceful 404 handling (no noisy "Request failed: 404" toasts)
 
 ## Getting Started
 Install dependencies and start the dev server:
@@ -35,6 +36,11 @@ REACT_APP_LOG_LEVEL=info
 REACT_APP_HEALTHCHECK_PATH=/health
 REACT_APP_FEATURE_FLAGS=
 REACT_APP_EXPERIMENTS_ENABLED=false
+
+# Backend toggle:
+# Set to "true" when backend endpoints are available and you want to use them.
+# Defaults to false (mock mode enabled).
+REACT_APP_ENABLE_BACKEND=false
 ```
 
 Auto-detection details:
@@ -42,6 +48,17 @@ Auto-detection details:
 - If REACT_APP_WS_URL is not set, the app attempts to derive the WS URL from REACT_APP_API_BASE by swapping http(s) -> ws(s) and appending /ws.
 - If still not available, the app derives from window.location, using ws:// or wss:// based on the current page and defaulting to the /ws path.
 - If no WS URL can be derived, the app logs a warning and disables the telemetry socket gracefully so the UI and login continue to work.
+
+### Mock Mode (No-DB)
+- Controlled by REACT_APP_ENABLE_BACKEND=false (default). In this mode, the app:
+  - Returns mock data from vehicles/alerts/charging/users API modules.
+  - Treats 404s from known list/detail endpoints as empty results instead of errors.
+  - Suppresses repetitive 404 error toasts/logs.
+- To switch off mock mode and call the real backend, set:
+  ```
+  REACT_APP_ENABLE_BACKEND=true
+  ```
+  Make sure REACT_APP_API_BASE points to a running backend.
 
 ## Project Structure
 ```
@@ -59,12 +76,21 @@ src/
   services/
     apiClient.js
     config.js
+    api/
+      vehicles.js
+      alerts.js
+      charging.js
+      users.js
+    ws/
+      telemetryClient.js
   hooks/
     useWebSocket.js
   state/
     store.js
   routes/
     index.js
+  utils/
+    errors.js
   App.js
   App.css
   index.js

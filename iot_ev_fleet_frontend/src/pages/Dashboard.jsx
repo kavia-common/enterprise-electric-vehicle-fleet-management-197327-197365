@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../state/store";
 import { alertsApi, vehiclesApi } from "../services";
 import { createTelemetryClient } from "../services/ws/telemetryClient";
+import { Config } from "../services/config";
 
 /**
  * PUBLIC_INTERFACE
@@ -36,7 +37,8 @@ const Dashboard = () => {
         const active = vehicles.filter((v) => (v.status || "").toLowerCase() === "online").length;
         const charging = vehicles.filter((v) => v.charging === true).length;
         if (mounted) {
-          setActiveVehicles(active || Math.max(vehicles.length - 2, 0));
+          const fallbackCount = Config.MOCK_MODE ? vehicles.length : Math.max(vehicles.length - 2, 0);
+          setActiveVehicles(active || fallbackCount || 0);
           setChargingNow(charging || Math.floor((vehicles.length || 20) * 0.25));
         }
       } catch {

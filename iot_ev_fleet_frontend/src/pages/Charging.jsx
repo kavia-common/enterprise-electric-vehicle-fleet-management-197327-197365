@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { chargingApi } from "../services";
+import { Config } from "../services/config";
 
 /**
  * PUBLIC_INTERFACE
@@ -27,7 +28,10 @@ const Charging = () => {
       } catch (e) {
         if (mounted) {
           setSessions([]);
-          setError(e?.message || "Failed to load sessions");
+          // In mock mode, don't show error toasts for unavailable endpoints
+          if (!(Config.MOCK_MODE && (e?.status === 404 || /mock mode/i.test(e?.message || "")))) {
+            setError(e?.message || "Failed to load sessions");
+          }
         }
       }
     };
@@ -37,14 +41,13 @@ const Charging = () => {
         const res = await chargingApi.listStations({ limit: 100 });
         const items = Array.isArray(res?.items) ? res.items : (Array.isArray(res) ? res : []);
         if (mounted) setStations(items);
-      } catch {
-        // Provide a minimal mock so UI is functional
+      } catch (e) {
         if (mounted) {
-          setStations([
-            { id: "st-1", name: "Depot A #1", status: "online", location: "Depot A", powerLimitKw: 50 },
-            { id: "st-2", name: "Depot A #2", status: "online", location: "Depot A", powerLimitKw: 60 },
-            { id: "st-3", name: "Depot B #1", status: "offline", location: "Depot B", powerLimitKw: 40 },
-          ]);
+          // In mock mode, silently fallback to empty (mock API already returns data)
+          if (!(Config.MOCK_MODE && (e?.status === 404 || /mock mode/i.test(e?.message || "")))) {
+            setError(e?.message || "Failed to load stations");
+          }
+          setStations([]);
         }
       }
     };
@@ -70,7 +73,9 @@ const Charging = () => {
         prev.map((s) => (s.id === stationId ? { ...s, powerLimitKw: Number(kw) } : s))
       );
     } catch (e) {
-      setError(e?.message || "Failed to update power limit");
+      if (!(Config.MOCK_MODE && (e?.status === 404 || /mock mode/i.test(e?.message || "")))) {
+        setError(e?.message || "Failed to update power limit");
+      }
     } finally {
       setBusy(null);
     }

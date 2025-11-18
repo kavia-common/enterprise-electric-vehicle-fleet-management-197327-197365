@@ -1,9 +1,10 @@
- /**
+ /** 
   * PUBLIC_INTERFACE
   * Telemetry WebSocket client with auto-reconnect and topic/vehicle subscriptions.
-  * - Connects to Config.wsUrl (e.g., ws://host/ws)
+  * - Connects to Config.wsUrl (e.g., ws://host/ws or wss://host/ws)
   * - Supports scoped subscriptions by vehicleId and topic
   * - Best-effort Authorization via Bearer token (from localStorage)
+  * - Gracefully disables WS if URL is not available (No-DB/mock mode)
   *
   * Usage:
   *   const client = new TelemetryClient();
@@ -33,9 +34,18 @@ function backoffDelays() {
 
 /** Create a ws URL with optional path and token as query param (when header not supported). */
 function buildWsUrl(base, path = "", token) {
-  // Ensure no trailing slash duplication
-  const url = path ? `${base}${path}` : base;
-  const u = new URL(url);
+  if (!base) return null;
+  const baseTrim = String(base).replace(/\/+$/, "");
+  const pathPart = String(path || "");
+  const url = pathPart ? `${baseTrim}${pathPart.startsWith("/") ? "" : "/"}${pathPart}` : baseTrim;
+
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+
   if (token) {
     // Some WS gateways do not allow auth headers; attach token as query fallback.
     u.searchParams.set("token", token);
@@ -75,22 +85,43 @@ export class TelemetryClient {
     this.backoff = backoffDelays();
     this._shouldReconnect = true;
     this._pingInterval = null;
+    this._disabled = !Config.wsUrl; // disable if no URL available
   }
 
   /**
    * PUBLIC_INTERFACE
    * connect
    * Establish a WebSocket connection and auto-resubscribe existing topics.
+   * If disabled (no URL), logs a warning and does nothing.
    */
   connect() {
+    if (this._disabled) {
+      console.warn(
+        "[TelemetryClient] WebSocket disabled: no URL available. Set REACT_APP_WS_URL or REACT_APP_API_BASE, or serve over a host where WS can be derived."
+      );
+      this.status = "DISABLED";
+      return;
+    }
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
     const token = getToken();
     const wsUrl = buildWsUrl(Config.wsUrl, this.path, token);
+    if (!wsUrl) {
+      console.warn("[TelemetryClient] Failed to build WS URL from base:", Config.wsUrl, "path:", this.path);
+      this.status = "ERROR";
+      return;
+    }
 
     this.status = "CONNECTING";
-    const ws = new WebSocket(wsUrl);
+    let ws;
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (e) {
+      console.warn("[TelemetryClient] WebSocket construction error:", e?.message || e);
+      this.status = "ERROR";
+      return;
+    }
     this.ws = ws;
 
     ws.onopen = () => {

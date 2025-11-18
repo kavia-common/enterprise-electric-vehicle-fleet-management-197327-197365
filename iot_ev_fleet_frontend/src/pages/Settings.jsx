@@ -18,9 +18,9 @@ const Settings = () => {
           <div className="card-desc">REACT_APP_API_BASE</div>
         </div>
         <div className="card">
-          <div className="card-title">WebSocket URL</div>
-          <div className="card-value" style={{ fontSize: 16 }}>{Config.wsUrl}</div>
-          <div className="card-desc">REACT_APP_WS_URL</div>
+          <div className="card-title">WebSocket URL (auto-detected)</div>
+          <div className="card-value" style={{ fontSize: 16 }}>{Config.wsUrl || "Disabled / Not available"}</div>
+          <div className="card-desc">REACT_APP_WS_URL (overrides) • otherwise derived from API base or window.location</div>
         </div>
       </div>
 

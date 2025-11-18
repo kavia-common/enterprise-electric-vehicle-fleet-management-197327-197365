@@ -6,7 +6,7 @@ Modern, lightweight React frontend using the Ocean Professional theme for the En
 - Ocean Professional theme (blue & amber accents, modern layout)
 - Sidebar + topbar layout
 - React Router v6 routes for Dashboard, Vehicles, Charging, Analytics, Settings
-- Environment-driven API and WebSocket configuration
+- Environment-driven API and WebSocket configuration (with HTTPS-aware auto-detection)
 - Minimal dependencies, no heavy UI libraries
 
 ## Getting Started
@@ -20,7 +20,9 @@ npm start
 Copy `.env.example` to `.env` and adjust as needed:
 ```
 REACT_APP_API_BASE=http://localhost:3001
-REACT_APP_WS_URL=ws://localhost:3001/ws
+# Optional: Explicit WS URL. If omitted, the app auto-selects ws:// or wss://.
+# For HTTPS pages, wss:// is used; for HTTP/local dev, ws:// is used.
+REACT_APP_WS_URL=
 # Optional additional envs supported by the container:
 REACT_APP_BACKEND_URL=
 REACT_APP_FRONTEND_URL=
@@ -34,6 +36,12 @@ REACT_APP_HEALTHCHECK_PATH=/health
 REACT_APP_FEATURE_FLAGS=
 REACT_APP_EXPERIMENTS_ENABLED=false
 ```
+
+Auto-detection details:
+- If REACT_APP_WS_URL is set and valid, it is used. When the page is served over HTTPS and the WS host matches the page host, the scheme is coerced to wss://.
+- If REACT_APP_WS_URL is not set, the app attempts to derive the WS URL from REACT_APP_API_BASE by swapping http(s) -> ws(s) and appending /ws.
+- If still not available, the app derives from window.location, using ws:// or wss:// based on the current page and defaulting to the /ws path.
+- If no WS URL can be derived, the app logs a warning and disables the telemetry socket gracefully so the UI and login continue to work.
 
 ## Project Structure
 ```

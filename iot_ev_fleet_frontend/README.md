@@ -21,6 +21,18 @@ Copy `.env.example` to `.env` and adjust as needed:
 ```
 REACT_APP_API_BASE=http://localhost:3001
 REACT_APP_WS_URL=ws://localhost:3001/ws
+# Optional additional envs supported by the container:
+REACT_APP_BACKEND_URL=
+REACT_APP_FRONTEND_URL=
+REACT_APP_NODE_ENV=development
+REACT_APP_NEXT_TELEMETRY_DISABLED=1
+REACT_APP_ENABLE_SOURCE_MAPS=true
+REACT_APP_PORT=3000
+REACT_APP_TRUST_PROXY=1
+REACT_APP_LOG_LEVEL=info
+REACT_APP_HEALTHCHECK_PATH=/health
+REACT_APP_FEATURE_FLAGS=
+REACT_APP_EXPERIMENTS_ENABLED=false
 ```
 
 ## Project Structure
